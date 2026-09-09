@@ -193,7 +193,7 @@ button{background:none;border:0;padding:0;cursor:pointer}
 
 <div class="dock">
   <div class="in">
-    <button class="btn pri" id="shoot">Foto</button>
+    <button class="btn pri" id="primary">Plakken</button>
     <button class="btn sec" id="manual">Handmatig</button>
   </div>
 </div>
@@ -206,6 +206,19 @@ button{background:none;border:0;padding:0;cursor:pointer}
 <div class="sheet" id="sEdit">
   <div class="grab"></div>
   <div id="editBody"></div>
+</div>
+
+<!-- plakken -->
+<div class="sheet" id="sPaste">
+  <div class="grab"></div>
+  <h2>Plakken vanuit Claude</h2>
+  <p class="lead">Stuur je foto naar Claude met de vraag hieronder, en plak het antwoord in het veld.</p>
+  <button class="btn sec" id="copyPrompt">Vraag kopiëren</button>
+  <div class="fld" style="margin-top:18px"><label for="pIn">Antwoord van Claude</label>
+    <textarea id="pIn" style="min-height:130px" placeholder='{"naam":"…","kcal":520,…}' spellcheck="false" autocapitalize="off"></textarea></div>
+  <p class="hint">Meerdere maaltijden tegelijk? Vraag Claude om een lijst; die worden dan allemaal toegevoegd.</p>
+  <button class="btn pri" id="pGo">Toevoegen</button>
+  <button class="link" id="pCancel">Annuleren</button>
 </div>
 
 <!-- instellingen -->
@@ -222,15 +235,21 @@ button{background:none;border:0;padding:0;cursor:pointer}
     <div class="fld"><label for="gF">Vet (g)</label><input type="number" inputmode="numeric" id="gF"></div>
   </div>
 
-  <h2 style="font-size:15px;margin:26px 0 12px">Fotoherkenning</h2>
-  <p class="note">De foto wordt één keer naar de Anthropic API gestuurd om te laten schatten wat erop staat, en daarna weggegooid. Hij wordt nergens bewaard — niet op je toestel en niet in het log.</p>
-  <div class="fld"><label for="key">API-sleutel</label><input type="password" id="key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"></div>
-  <p class="hint">Aanmaken op console.anthropic.com → API keys. De sleutel blijft in de opslag van deze app op je telefoon.</p>
-  <div class="fld"><label for="model">Model</label><select id="model">
-    <option value="claude-haiku-4-5-20251001">Haiku 4.5 — snel en goedkoop</option>
-    <option value="claude-sonnet-5">Sonnet 5 — beste balans</option>
-    <option value="claude-opus-5">Opus 5 — nauwkeurigst</option>
+  <h2 style="font-size:15px;margin:26px 0 12px">Foto's omzetten</h2>
+  <div class="fld"><label for="prim">Grote knop onderin</label><select id="prim">
+    <option value="plak">Plakken — via de Claude-app, gratis</option>
+    <option value="foto">Foto — rechtstreeks, met eigen API-sleutel</option>
   </select></div>
+  <div id="keyBlock" hidden>
+    <p class="note">De foto wordt één keer naar de Anthropic API gestuurd en daarna weggegooid. Hij wordt nergens bewaard — niet op je toestel en niet in het log.</p>
+    <div class="fld"><label for="key">API-sleutel</label><input type="password" id="key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"></div>
+    <p class="hint">Aanmaken op platform.claude.com → Settings → API keys. De sleutel blijft in de opslag van deze app op je telefoon.</p>
+    <div class="fld"><label for="model">Model</label><select id="model">
+      <option value="claude-haiku-4-5-20251001">Haiku 4.5 — snel en goedkoop</option>
+      <option value="claude-sonnet-5">Sonnet 5 — beste balans</option>
+      <option value="claude-opus-5">Opus 5 — nauwkeurigst</option>
+    </select></div>
+  </div>
 
   <button class="btn pri" id="cfgSave">Bewaren</button>
   <button class="link" id="expo">Log exporteren als bestand</button>
@@ -252,7 +271,8 @@ function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catc
 
 var entries=get(K.e,[]);
 var goals=get(K.g,{kcal:2200,p:140,c:230,f:70});
-var cfg=get(K.c,{key:'',model:'claude-haiku-4-5-20251001'});
+var cfg=get(K.c,{key:'',model:'claude-haiku-4-5-20251001',primary:'plak'});
+if(!cfg.primary)cfg.primary='plak';
 var cursor=new Date();
 
 /* ------------ hulpjes ------------ */
@@ -352,6 +372,8 @@ function render(){
     return '<button class="chip" data-re="'+i+'">'+esc(o.x.name)+' · '+nl(o.x.kcal)+'</button>';
   }).join('');
   $('#chips').repeat=top.map(function(o){return o.x});
+
+  $('#primary').textContent=cfg.primary==='foto'?'Foto':'Plakken';
 }
 
 /* ------------ navigatie ------------ */
@@ -387,10 +409,11 @@ $('#chips').addEventListener('click',function(e){
 /* ------------ opslaan van een regel ------------ */
 function save(o){
   var now=new Date();
-  var onToday=iso(cursor)===iso(now);
+  var day=o.date&&/^\d{4}-\d{2}-\d{2}$/.test(o.date)?o.date:iso(cursor);
+  var onToday=day===iso(now);
   entries.push({
     id:o.id||uid(),
-    date:iso(cursor),
+    date:day,
     time:o.time||(onToday?String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'):'12:00'),
     ts:o.ts||now.getTime(),
     name:o.name,kcal:o.kcal,p:o.p,c:o.c,f:o.f,note:o.note||''
@@ -435,12 +458,82 @@ function editor(vals,title,lead){
 
 $('#manual').addEventListener('click',function(){editor({},'Handmatig invoeren',null)});
 
-/* ------------ foto → schatting ------------ */
-$('#shoot').addEventListener('click',function(){
-  if(!cfg.key){show('#sCfg');setTimeout(function(){$('#key').focus()},320);toast('Vul eerst je API-sleutel in');return}
-  $('#file').value='';
-  $('#file').click();
+/* ------------ plakken vanuit de Claude-app ------------ */
+var ASK=
+'Schat op basis van deze foto wat ik eet en drink. Let op de portiegrootte: gebruik het bord, '+
+'bestek, glas of blikje als maatstaf, en houd rekening met olie, boter, saus of dressing.\n\n'+
+'Antwoord met uitsluitend JSON, zonder tekst eromheen:\n'+
+'{"naam":"korte omschrijving","kcal":0,"eiwit":0,"koolhydraten":0,"vet":0,"toelichting":"welke portie je aanneemt"}\n\n'+
+'Hele getallen voor de hele portie op de foto, macro\'s in grammen. '+
+'Stuur ik meerdere foto\'s, geef dan een JSON-lijst met één object per maaltijd.';
+
+function openPaste(){
+  $('#pIn').value='';
+  show('#sPaste');
+  setTimeout(function(){$('#pIn').focus()},320);
+}
+$('#pCancel').addEventListener('click',close);
+$('#copyPrompt').addEventListener('click',function(){
+  var done=function(){toast('Gekopieerd — plak het bij je foto in Claude')};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ASK).then(done,fallback);
+  }else fallback();
+  function fallback(){
+    var t=document.createElement('textarea');
+    t.value=ASK;t.style.position='fixed';t.style.opacity='0';
+    document.body.appendChild(t);t.select();t.setSelectionRange(0,ASK.length);
+    try{document.execCommand('copy');done()}catch(e){toast('Kopiëren lukt niet — selecteer de tekst handmatig')}
+    t.remove();
+  }
 });
+
+function pick(o,keys){
+  for(var i=0;i<keys.length;i++){if(o[keys[i]]!=null)return o[keys[i]]}
+  return 0;
+}
+function normalise(o){
+  return {
+    name:String(pick(o,['naam','name','omschrijving','item'])||'').trim(),
+    kcal:num(pick(o,['kcal','calorieen','calorieën','calories','energie'])),
+    p:num(pick(o,['eiwit','eiwitten','protein'])),
+    c:num(pick(o,['koolhydraten','koolhydraat','carbs','carbohydrates'])),
+    f:num(pick(o,['vet','vetten','fat'])),
+    note:String(pick(o,['toelichting','uitleg','note','notes'])||''),
+    date:pick(o,['datum','date'])||'',
+    time:pick(o,['tijd','time'])||''
+  };
+}
+
+$('#pGo').addEventListener('click',function(){
+  var raw=$('#pIn').value.trim();
+  if(!raw){$('#pIn').focus();return}
+  raw=raw.replace(/```[a-z]*/gi,'').trim();
+  var m=raw.match(/\[[\s\S]*\]/)||raw.match(/\{[\s\S]*\}/);
+  var data;
+  try{ data=JSON.parse(m?m[0]:raw) }catch(e){
+    toast('Dat is geen geldige JSON — kopieer het hele antwoord');return;
+  }
+  var list=(Array.isArray(data)?data:[data]).map(normalise).filter(function(x){return x.name});
+  if(!list.length){toast('Geen maaltijd gevonden in dit antwoord');return}
+
+  if(list.length===1){
+    close();
+    setTimeout(function(){editor(list[0],'Kloppen deze waardes?','Pas gerust aan voordat je opslaat.')},260);
+    return;
+  }
+  list.forEach(function(x){save(x)});
+  close();toast(list.length+' maaltijden toegevoegd');
+});
+
+/* ------------ hoofdknop ------------ */
+function primaryAction(){
+  if(cfg.primary==='foto'){
+    if(!cfg.key){show('#sCfg');setTimeout(function(){$('#key').focus()},320);toast('Vul eerst je API-sleutel in');return}
+    $('#file').value='';$('#file').click();return;
+  }
+  openPaste();
+}
+$('#primary').addEventListener('click',primaryAction);
 
 $('#file').addEventListener('change',function(e){
   var f=e.target.files&&e.target.files[0];
@@ -524,9 +617,11 @@ function analyse(file){
     $('#editBody').innerHTML=
       '<h2>Dat lukte niet</h2>'+
       '<div class="err" style="margin-top:14px">'+esc(err.message||'Onbekende fout.')+'</div>'+
-      '<button class="btn sec" id="eManual">Handmatig invoeren</button>'+
+      '<button class="btn sec" id="ePaste">Via de Claude-app plakken</button>'+
+      '<button class="link" id="eManual">Handmatig invoeren</button>'+
       '<button class="link" id="eCancel">Sluiten</button>';
     $('#eCancel').addEventListener('click',close);
+    $('#ePaste').addEventListener('click',function(){close();setTimeout(openPaste,260)});
     $('#eManual').addEventListener('click',function(){editor({},'Handmatig invoeren',null)});
   });
 }
@@ -534,12 +629,14 @@ function analyse(file){
 /* ------------ instellingen ------------ */
 $('#cfgBtn').addEventListener('click',function(){
   $('#gKcal').value=goals.kcal; $('#gP').value=goals.p; $('#gC').value=goals.c; $('#gF').value=goals.f;
-  $('#key').value=cfg.key; $('#model').value=cfg.model;
+  $('#key').value=cfg.key; $('#model').value=cfg.model; $('#prim').value=cfg.primary;
+  $('#keyBlock').hidden=cfg.primary!=='foto';
   show('#sCfg');
 });
+$('#prim').addEventListener('change',function(){$('#keyBlock').hidden=this.value!=='foto'});
 $('#cfgSave').addEventListener('click',function(){
   goals={kcal:num($('#gKcal').value),p:num($('#gP').value),c:num($('#gC').value),f:num($('#gF').value)};
-  cfg={key:$('#key').value.trim(),model:$('#model').value};
+  cfg={key:$('#key').value.trim(),model:$('#model').value,primary:$('#prim').value};
   put(K.g,goals);put(K.c,cfg);render();close();toast('Bewaard');
 });
 
@@ -572,7 +669,7 @@ $('#impf').addEventListener('change',function(e){
 $('#wipe').addEventListener('click',function(){
   if(!confirm('Het hele log, je doelen en je API-sleutel worden gewist. Dit kan niet ongedaan gemaakt worden.'))return;
   localStorage.removeItem(K.e);localStorage.removeItem(K.g);localStorage.removeItem(K.c);
-  entries=[];goals={kcal:2200,p:140,c:230,f:70};cfg={key:'',model:'claude-haiku-4-5-20251001'};
+  entries=[];goals={kcal:2200,p:140,c:230,f:70};cfg={key:'',model:'claude-haiku-4-5-20251001',primary:'plak'};
   render();close();toast('Gewist');
 });
 
