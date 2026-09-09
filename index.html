@@ -282,6 +282,7 @@ var MON=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'
 function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function nl(n){return Math.round(n||0).toLocaleString('nl-NL')}
 function num(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)&&n>0?Math.round(n):0}
+function fv(v){return (v==null||v==='')?'':String(v)}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML}
 
@@ -428,11 +429,11 @@ function editor(vals,title,lead){
     '<h2>'+esc(title)+'</h2>'+
     (lead?'<p class="lead">'+esc(lead)+'</p>':'<div style="height:14px"></div>')+
     '<div class="fld"><label for="eN">Wat heb je gegeten</label><input id="eN" value="'+esc(vals.name||'')+'" placeholder="Bijv. havermout met banaan"></div>'+
-    '<div class="fld"><label for="eK">Calorieën (kcal)</label><input id="eK" type="number" inputmode="numeric" value="'+(vals.kcal||'')+'"></div>'+
+    '<div class="fld"><label for="eK">Calorieën (kcal)</label><input id="eK" type="number" inputmode="numeric" value="'+fv(vals.kcal)+'"></div>'+
     '<div class="row">'+
-      '<div class="fld"><label for="eP">Eiwit (g)</label><input id="eP" type="number" inputmode="numeric" value="'+(vals.p||'')+'"></div>'+
-      '<div class="fld"><label for="eC">Koolh. (g)</label><input id="eC" type="number" inputmode="numeric" value="'+(vals.c||'')+'"></div>'+
-      '<div class="fld"><label for="eF">Vet (g)</label><input id="eF" type="number" inputmode="numeric" value="'+(vals.f||'')+'"></div>'+
+      '<div class="fld"><label for="eP">Eiwit (g)</label><input id="eP" type="number" inputmode="numeric" value="'+fv(vals.p)+'"></div>'+
+      '<div class="fld"><label for="eC">Koolh. (g)</label><input id="eC" type="number" inputmode="numeric" value="'+fv(vals.c)+'"></div>'+
+      '<div class="fld"><label for="eF">Vet (g)</label><input id="eF" type="number" inputmode="numeric" value="'+fv(vals.f)+'"></div>'+
     '</div>'+
     (vals.note?'<p class="note">'+esc(vals.note)+'</p>':'')+
     '<button class="btn pri" id="eSave">'+(vals.id?'Wijziging bewaren':'Toevoegen aan '+(iso(cursor)===iso(new Date())?'vandaag':'deze dag'))+'</button>'+
