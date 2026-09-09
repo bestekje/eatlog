@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Eetlog</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Eetlog">
+<meta name="theme-color" content="#16232B">
+<link rel="manifest" href='data:application/manifest+json,%7B%22name%22%3A%22Eetlog%22%2C%22short_name%22%3A%22Eetlog%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2316232B%22%2C%22theme_color%22%3A%22%2316232B%22%7D'>
+<style>
+:root{
+  --ground:#16232B;
+  --raise:#1E313B;
+  --line:#2C4250;
+  --ink:#EFE7D8;
+  --mute:#8AA0AB;
+  --yolk:#F2B231;
+  --eiwit:#A8C686;
+  --kh:#6FA8C7;
+  --vet:#E39B6E;
+  --alarm:#E2705F;
+  --gut:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--ground);color:var(--ink)}
+body{
+  font:400 16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-synthesis:none;
+  -webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top) 0 calc(96px + env(safe-area-inset-bottom));
+  min-height:100vh;
+  overscroll-behavior-y:none;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--yolk);outline-offset:2px;border-radius:2px}
+.wrap{max-width:520px;margin:0 auto;padding:0 var(--gut)}
+
+/* ---- kop ---- */
+.top{display:flex;align-items:center;gap:6px;padding:14px 0 6px}
+.top h1{
+  flex:1;margin:0;text-align:center;
+  font:500 16px/1 -apple-system,sans-serif;letter-spacing:.01em;
+}
+.top h1 small{display:block;color:var(--mute);font-size:12px;margin-top:3px;font-weight:400}
+.nav{width:40px;height:40px;display:grid;place-items:center;color:var(--mute);border-radius:50%}
+.nav:active{background:var(--raise)}
+.nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- dagtotaal ---- */
+.total{text-align:center;padding:22px 0 4px}
+.total .fig{
+  font-family:ui-serif,Georgia,"Times New Roman",serif;
+  font-size:76px;line-height:.9;font-weight:400;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+.total .sub{color:var(--mute);font-size:13px;margin-top:10px;font-variant-numeric:tabular-nums}
+.total .sub b{color:var(--ink);font-weight:500}
+.over{color:var(--alarm)}
+
+.track{height:10px;background:var(--raise);border-radius:5px;overflow:hidden;margin:18px 0 0}
+.track i{display:block;height:100%;background:var(--yolk);border-radius:5px;transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.track.is-over i{background:var(--alarm)}
+
+/* ---- macro's ---- */
+.macros{margin:22px 0 4px;display:grid;gap:11px}
+.macro{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:11px;font-size:13px}
+.macro span:first-child{color:var(--mute)}
+.macro .bar{height:5px;background:var(--raise);border-radius:3px;overflow:hidden}
+.macro .bar i{display:block;height:100%;border-radius:3px;transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.macro .num{color:var(--mute);font-variant-numeric:tabular-nums;font-size:12px}
+.macro .num b{color:var(--ink);font-weight:500}
+
+/* ---- weekstrip ---- */
+.week{display:flex;gap:6px;margin:26px 0 0}
+.week button{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;padding:6px 0;border-radius:8px}
+.week .col{width:100%;height:34px;display:flex;align-items:flex-end;justify-content:center}
+.week .col i{display:block;width:11px;background:var(--line);border-radius:2px;min-height:2px}
+.week .col i.hit{background:var(--yolk)}
+.week .col i.bust{background:var(--alarm)}
+.week em{font-style:normal;font-size:10px;color:var(--mute)}
+.week .now{background:var(--raise)}
+.week .now em{color:var(--ink)}
+
+/* ---- logregels ---- */
+.rule{height:1px;background:var(--line);margin:26px 0 0}
+.log{list-style:none;margin:0;padding:0}
+.log li{display:grid;grid-template-columns:46px 1fr auto;gap:12px;padding:15px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.log .t{color:var(--mute);font-size:12px;font-variant-numeric:tabular-nums}
+.log .nm{font-size:15px}
+.log .mm{color:var(--mute);font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums}
+.log .kc{font-variant-numeric:tabular-nums;font-size:15px;white-space:nowrap}
+.log li[data-open="1"] .act{display:flex}
+.act{display:none;grid-column:2/4;gap:16px;margin-top:10px}
+.act button{font-size:13px;color:var(--yolk)}
+.act button.rm{color:var(--alarm)}
+.empty{padding:38px 4px;color:var(--mute);font-size:14px;line-height:1.6}
+
+.again{margin:26px 0 0}
+.again h2{font:500 13px/1 sans-serif;color:var(--mute);margin:0 0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--raise);border:1px solid var(--line);border-radius:16px;padding:7px 13px;font-size:13px}
+.chip:active{background:var(--line)}
+
+/* ---- balk onderin ---- */
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:linear-gradient(to top,var(--ground) 62%,rgba(22,35,43,0));
+  padding:22px var(--gut) calc(14px + env(safe-area-inset-bottom));
+}
+.dock .in{max-width:520px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;height:52px;border-radius:26px;display:grid;place-items:center;font-size:15px;font-weight:500}
+.btn.pri{background:var(--yolk);color:#16232B}
+.btn.sec{background:var(--raise);border:1px solid var(--line)}
+.btn:active{opacity:.75}
+.btn[disabled]{opacity:.45}
+
+/* ---- sheets ---- */
+.veil{position:fixed;inset:0;background:rgba(8,14,18,.72);z-index:40;opacity:0;pointer-events:none;transition:opacity .22s}
+.veil.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:var(--raise);border-radius:20px 20px 0 0;
+  border-top:1px solid var(--line);
+  max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:10px var(--gut) calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(101%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
+}
+.sheet.on{transform:translateY(0)}
+.grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 18px}
+.sheet h2{font:500 19px/1.2 sans-serif;margin:0 0 4px}
+.sheet p.lead{color:var(--mute);font-size:13px;margin:0 0 20px;line-height:1.5}
+.fld{margin:0 0 14px}
+.fld label{display:block;font-size:12px;color:var(--mute);margin:0 0 6px}
+.fld input,.fld select,.fld textarea{
+  width:100%;background:var(--ground);border:1px solid var(--line);
+  border-radius:10px;padding:12px 13px;font-size:16px;
+}
+.fld textarea{resize:vertical;min-height:60px}
+.row{display:flex;gap:10px}
+.row .fld{flex:1}
+.sheet .btn{width:100%;margin-top:8px}
+.sheet .link{display:block;width:100%;text-align:center;padding:14px 0;color:var(--mute);font-size:13px}
+.sheet .link.danger{color:var(--alarm)}
+.note{background:var(--ground);border:1px solid var(--line);border-radius:10px;padding:12px 13px;font-size:13px;color:var(--mute);line-height:1.55;margin:0 0 18px}
+.hint{font-size:12px;color:var(--mute);line-height:1.5;margin:-6px 0 16px}
+
+.spin{display:flex;align-items:center;gap:12px;padding:26px 0 10px;color:var(--mute);font-size:14px}
+.spin i{width:17px;height:17px;border:2px solid var(--line);border-top-color:var(--yolk);border-radius:50%;animation:sp .7s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{background:rgba(226,112,95,.12);border:1px solid rgba(226,112,95,.4);color:#F0AFA4;border-radius:10px;padding:12px 13px;font-size:13px;line-height:1.5;margin:0 0 16px}
+.toast{
+  position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translate(-50%,10px);
+  background:var(--ink);color:var(--ground);padding:11px 18px;border-radius:22px;font-size:14px;font-weight:500;
+  z-index:60;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <button class="nav" id="prev" aria-label="Vorige dag"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1 id="dayName">—<small id="dayDate"></small></h1>
+    <button class="nav" id="cfgBtn" aria-label="Instellingen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.2a2 2 0 11-4 0v-.1A1.6 1.6 0 007 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003.6 14H3.4a2 2 0 110-4h.1A1.6 1.6 0 004.6 7a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 3.6V3.4a2 2 0 114 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8v.1a1.6 1.6 0 001.5 1h.2a2 2 0 110 4h-.1a1.6 1.6 0 00-1.4 1z"/></svg></button>
+    <button class="nav" id="next" aria-label="Volgende dag"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+
+  <div class="total">
+    <div class="fig" id="figKcal">0</div>
+    <div class="sub" id="subKcal"></div>
+  </div>
+  <div class="track" id="track"><i style="width:0"></i></div>
+
+  <div class="macros" id="macros"></div>
+
+  <div class="week" id="week"></div>
+
+  <div class="rule"></div>
+  <ul class="log" id="log"></ul>
+  <div class="empty" id="empty" hidden>Nog niets vandaag. Maak een foto van je bord, of voer het handmatig in.</div>
+
+  <div class="again" id="again" hidden>
+    <h2>Vaker gegeten</h2>
+    <div class="chips" id="chips"></div>
+  </div>
+</div>
+
+<div class="dock">
+  <div class="in">
+    <button class="btn pri" id="shoot">Foto</button>
+    <button class="btn sec" id="manual">Handmatig</button>
+  </div>
+</div>
+
+<input type="file" id="file" accept="image/*" hidden>
+
+<div class="veil" id="veil"></div>
+
+<!-- controleren / bewerken -->
+<div class="sheet" id="sEdit">
+  <div class="grab"></div>
+  <div id="editBody"></div>
+</div>
+
+<!-- instellingen -->
+<div class="sheet" id="sCfg">
+  <div class="grab"></div>
+  <h2>Instellingen</h2>
+  <p class="lead">Alles staat op dit toestel. Er gaat niets naar een server, behalve de foto die je laat analyseren.</p>
+
+  <h2 style="font-size:15px;margin:22px 0 12px">Dagdoel</h2>
+  <div class="fld"><label for="gKcal">Calorieën (kcal)</label><input type="number" inputmode="numeric" id="gKcal"></div>
+  <div class="row">
+    <div class="fld"><label for="gP">Eiwit (g)</label><input type="number" inputmode="numeric" id="gP"></div>
+    <div class="fld"><label for="gC">Koolh. (g)</label><input type="number" inputmode="numeric" id="gC"></div>
+    <div class="fld"><label for="gF">Vet (g)</label><input type="number" inputmode="numeric" id="gF"></div>
+  </div>
+
+  <h2 style="font-size:15px;margin:26px 0 12px">Fotoherkenning</h2>
+  <p class="note">De foto wordt één keer naar de Anthropic API gestuurd om te laten schatten wat erop staat, en daarna weggegooid. Hij wordt nergens bewaard — niet op je toestel en niet in het log.</p>
+  <div class="fld"><label for="key">API-sleutel</label><input type="password" id="key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"></div>
+  <p class="hint">Aanmaken op console.anthropic.com → API keys. De sleutel blijft in de opslag van deze app op je telefoon.</p>
+  <div class="fld"><label for="model">Model</label><select id="model">
+    <option value="claude-haiku-4-5-20251001">Haiku 4.5 — snel en goedkoop</option>
+    <option value="claude-sonnet-5">Sonnet 5 — beste balans</option>
+    <option value="claude-opus-5">Opus 5 — nauwkeurigst</option>
+  </select></div>
+
+  <button class="btn pri" id="cfgSave">Bewaren</button>
+  <button class="link" id="expo">Log exporteren als bestand</button>
+  <button class="link" id="impo">Log importeren</button>
+  <button class="link danger" id="wipe">Alles wissen</button>
+  <input type="file" id="impf" accept="application/json,.json" hidden>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ------------ opslag ------------ */
+var K={e:'eetlog.entries',g:'eetlog.goals',c:'eetlog.cfg'};
+function get(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast('Opslaan mislukt — geheugen vol?');return false}}
+
+var entries=get(K.e,[]);
+var goals=get(K.g,{kcal:2200,p:140,c:230,f:70});
+var cfg=get(K.c,{key:'',model:'claude-haiku-4-5-20251001'});
+var cursor=new Date();
+
+/* ------------ hulpjes ------------ */
+var $=function(s){return document.querySelector(s)};
+var DAY=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+var MON=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function nl(n){return Math.round(n||0).toLocaleString('nl-NL')}
+function num(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)&&n>0?Math.round(n):0}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML}
+
+var tmr;
+function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(tmr);tmr=setTimeout(function(){t.classList.remove('on')},2100)}
+
+/* ------------ sheets ------------ */
+var openSheet=null;
+function show(sel){close();openSheet=$(sel);openSheet.classList.add('on');$('#veil').classList.add('on')}
+function close(){if(openSheet)openSheet.classList.remove('on');openSheet=null;$('#veil').classList.remove('on')}
+$('#veil').addEventListener('click',close);
+
+/* ------------ afleiden ------------ */
+function forDay(d){return entries.filter(function(x){return x.date===d}).sort(function(a,b){return a.ts-b.ts})}
+function sum(list){
+  return list.reduce(function(t,x){t.kcal+=x.kcal||0;t.p+=x.p||0;t.c+=x.c||0;t.f+=x.f||0;return t},{kcal:0,p:0,c:0,f:0});
+}
+
+/* ------------ tekenen ------------ */
+function render(){
+  var d=iso(cursor), today=iso(new Date());
+  var list=forDay(d), s=sum(list);
+
+  var label=DAY[cursor.getDay()];
+  if(d===today) label='vandaag';
+  else{var y=new Date();y.setDate(y.getDate()-1);if(d===iso(y))label='gisteren'}
+  $('#dayName').firstChild.nodeValue=label;
+  $('#dayDate').textContent=cursor.getDate()+' '+MON[cursor.getMonth()]+' '+cursor.getFullYear();
+  $('#next').style.visibility = d>=today ? 'hidden':'visible';
+
+  $('#figKcal').textContent=nl(s.kcal);
+  var left=goals.kcal-s.kcal;
+  $('#figKcal').className='fig'+(left<0?' over':'');
+  $('#subKcal').innerHTML = left>=0
+    ? 'van <b>'+nl(goals.kcal)+'</b> kcal &nbsp;·&nbsp; nog '+nl(left)+' te gaan'
+    : 'van <b>'+nl(goals.kcal)+'</b> kcal &nbsp;·&nbsp; <span class="over">'+nl(-left)+' over het doel</span>';
+
+  var pct=goals.kcal>0?s.kcal/goals.kcal:0;
+  $('#track').className='track'+(pct>1?' is-over':'');
+  $('#track').firstElementChild.style.width=Math.min(100,pct*100)+'%';
+
+  var M=[['Eiwit','p','--eiwit'],['Koolhydraten','c','--kh'],['Vet','f','--vet']];
+  $('#macros').innerHTML=M.map(function(m){
+    var have=s[m[1]], want=goals[m[1]]||0;
+    var w=want>0?Math.min(100,have/want*100):0;
+    return '<div class="macro"><span>'+m[0]+'</span>'+
+      '<span class="bar"><i style="width:'+w+'%;background:var('+m[2]+')"></i></span>'+
+      '<span class="num"><b>'+nl(have)+'</b> / '+nl(want)+' g</span></div>';
+  }).join('');
+
+  // weekstrip
+  var wk='';
+  for(var i=6;i>=0;i--){
+    var dt=new Date(cursor);dt.setDate(dt.getDate()-i);
+    var k=iso(dt), t=sum(forDay(k)).kcal;
+    var r=goals.kcal>0?t/goals.kcal:0;
+    var h=Math.max(2,Math.min(34,Math.round(r*28)));
+    var cls=t===0?'':(r>1.05?'bust':'hit');
+    wk+='<button data-d="'+k+'" class="'+(i===0?'now':'')+'">'+
+        '<span class="col"><i class="'+cls+'" style="height:'+h+'px"></i></span>'+
+        '<em>'+DAY[dt.getDay()].slice(0,2)+'</em></button>';
+  }
+  $('#week').innerHTML=wk;
+
+  // logregels
+  $('#log').innerHTML=list.map(function(x){
+    var mm=[];
+    if(x.p)mm.push(nl(x.p)+' g eiwit');
+    if(x.c)mm.push(nl(x.c)+' g kh');
+    if(x.f)mm.push(nl(x.f)+' g vet');
+    return '<li data-id="'+x.id+'"><span class="t">'+esc(x.time)+'</span>'+
+      '<span><span class="nm">'+esc(x.name)+'</span>'+(mm.length?'<div class="mm">'+mm.join(' · ')+'</div>':'')+'</span>'+
+      '<span class="kc">'+nl(x.kcal)+'</span>'+
+      '<span class="act"><button data-act="edit">Bewerken</button><button data-act="del" class="rm">Verwijderen</button></span></li>';
+  }).join('');
+  $('#empty').hidden=list.length>0;
+
+  // vaker gegeten
+  var seen={},freq=[];
+  entries.slice().sort(function(a,b){return b.ts-a.ts}).forEach(function(x){
+    var k=x.name.toLowerCase().trim();
+    if(seen[k]){seen[k].n++;return}
+    seen[k]={n:1,x:x};freq.push(k);
+  });
+  var top=freq.map(function(k){return seen[k]}).sort(function(a,b){return b.n-a.n||b.x.ts-a.x.ts}).slice(0,8);
+  $('#again').hidden=top.length===0;
+  $('#chips').innerHTML=top.map(function(o,i){
+    return '<button class="chip" data-re="'+i+'">'+esc(o.x.name)+' · '+nl(o.x.kcal)+'</button>';
+  }).join('');
+  $('#chips').repeat=top.map(function(o){return o.x});
+}
+
+/* ------------ navigatie ------------ */
+$('#prev').addEventListener('click',function(){cursor.setDate(cursor.getDate()-1);render()});
+$('#next').addEventListener('click',function(){
+  var t=new Date();if(iso(cursor)>=iso(t))return;
+  cursor.setDate(cursor.getDate()+1);render();
+});
+$('#week').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-d]');if(!b)return;
+  var p=b.dataset.d.split('-');cursor=new Date(+p[0],+p[1]-1,+p[2]);render();
+});
+$('#log').addEventListener('click',function(e){
+  var li=e.target.closest('li');if(!li)return;
+  var act=e.target.dataset.act;
+  if(act==='del'){
+    entries=entries.filter(function(x){return x.id!==li.dataset.id});
+    put(K.e,entries);render();toast('Verwijderd');return;
+  }
+  if(act==='edit'){
+    var x=entries.filter(function(y){return y.id===li.dataset.id})[0];
+    if(x)editor(x,'Bewerken',null);return;
+  }
+  li.dataset.open=li.dataset.open==='1'?'0':'1';
+});
+$('#chips').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-re]');if(!b)return;
+  var src=$('#chips').repeat[+b.dataset.re];
+  save({name:src.name,kcal:src.kcal,p:src.p,c:src.c,f:src.f,note:src.note});
+  toast('Toegevoegd');
+});
+
+/* ------------ opslaan van een regel ------------ */
+function save(o){
+  var now=new Date();
+  var onToday=iso(cursor)===iso(now);
+  entries.push({
+    id:o.id||uid(),
+    date:iso(cursor),
+    time:o.time||(onToday?String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'):'12:00'),
+    ts:o.ts||now.getTime(),
+    name:o.name,kcal:o.kcal,p:o.p,c:o.c,f:o.f,note:o.note||''
+  });
+  put(K.e,entries);render();
+}
+
+/* ------------ bewerk-/controleerscherm ------------ */
+function editor(vals,title,lead){
+  vals=vals||{};
+  $('#editBody').innerHTML=
+    '<h2>'+esc(title)+'</h2>'+
+    (lead?'<p class="lead">'+esc(lead)+'</p>':'<div style="height:14px"></div>')+
+    '<div class="fld"><label for="eN">Wat heb je gegeten</label><input id="eN" value="'+esc(vals.name||'')+'" placeholder="Bijv. havermout met banaan"></div>'+
+    '<div class="fld"><label for="eK">Calorieën (kcal)</label><input id="eK" type="number" inputmode="numeric" value="'+(vals.kcal||'')+'"></div>'+
+    '<div class="row">'+
+      '<div class="fld"><label for="eP">Eiwit (g)</label><input id="eP" type="number" inputmode="numeric" value="'+(vals.p||'')+'"></div>'+
+      '<div class="fld"><label for="eC">Koolh. (g)</label><input id="eC" type="number" inputmode="numeric" value="'+(vals.c||'')+'"></div>'+
+      '<div class="fld"><label for="eF">Vet (g)</label><input id="eF" type="number" inputmode="numeric" value="'+(vals.f||'')+'"></div>'+
+    '</div>'+
+    (vals.note?'<p class="note">'+esc(vals.note)+'</p>':'')+
+    '<button class="btn pri" id="eSave">'+(vals.id?'Wijziging bewaren':'Toevoegen aan '+(iso(cursor)===iso(new Date())?'vandaag':'deze dag'))+'</button>'+
+    '<button class="link" id="eCancel">Annuleren</button>';
+
+  show('#sEdit');
+  setTimeout(function(){if(!vals.name)$('#eN').focus()},320);
+
+  $('#eCancel').addEventListener('click',close);
+  $('#eSave').addEventListener('click',function(){
+    var name=$('#eN').value.trim();
+    if(!name){$('#eN').focus();toast('Geef even een naam op');return}
+    var o={name:name,kcal:num($('#eK').value),p:num($('#eP').value),c:num($('#eC').value),f:num($('#eF').value),note:vals.note};
+    if(vals.id){
+      entries=entries.map(function(x){return x.id===vals.id?Object.assign({},x,o):x});
+      put(K.e,entries);render();
+    }else{
+      save(o);
+    }
+    close();toast(vals.id?'Bijgewerkt':'Toegevoegd');
+  });
+}
+
+$('#manual').addEventListener('click',function(){editor({},'Handmatig invoeren',null)});
+
+/* ------------ foto → schatting ------------ */
+$('#shoot').addEventListener('click',function(){
+  if(!cfg.key){show('#sCfg');setTimeout(function(){$('#key').focus()},320);toast('Vul eerst je API-sleutel in');return}
+  $('#file').value='';
+  $('#file').click();
+});
+
+$('#file').addEventListener('change',function(e){
+  var f=e.target.files&&e.target.files[0];
+  if(f)analyse(f);
+});
+
+function shrink(file){
+  return new Promise(function(res,rej){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){
+      var max=1024, s=Math.min(1,max/Math.max(img.width,img.height));
+      var c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(img.width*s));
+      c.height=Math.max(1,Math.round(img.height*s));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      var out=c.toDataURL('image/jpeg',0.8).split(',')[1];
+      c.width=c.height=1;              // canvas direct leegmaken
+      res(out);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('Kon de foto niet lezen.'))};
+    img.src=url;
+  });
+}
+
+var PROMPT=
+'Je krijgt een foto van eten of drinken. Schat wat erop staat en hoeveel.\n\n'+
+'Let op de portiegrootte: gebruik het bord, bestek, glas, blikje of de hand als maatstaf. '+
+'Ga uit van een normale bereiding tenzij je duidelijk anders ziet (frituur, saus, olie, boter, dressing).\n\n'+
+'Antwoord met uitsluitend geldige JSON, zonder markdown, zonder ```-blokken, zonder tekst eromheen:\n'+
+'{"naam":"korte Nederlandse omschrijving, max 6 woorden","kcal":getal,"eiwit":getal_gram,'+
+'"koolhydraten":getal_gram,"vet":getal_gram,"toelichting":"1 zin: welke onderdelen je ziet en welke portie je hebt aangenomen"}\n\n'+
+'Alle getallen zijn hele getallen voor de hele afgebeelde portie. '+
+'Als je echt geen eten ziet, zet "naam" op "geen eten herkend" en alle getallen op 0.';
+
+function analyse(file){
+  $('#editBody').innerHTML='<h2>Foto bekijken</h2><div class="spin"><i></i><span>Bezig met schatten…</span></div>';
+  show('#sEdit');
+
+  shrink(file).then(function(b64){
+    return fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key':cfg.key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:cfg.model,
+        max_tokens:700,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+          {type:'text',text:PROMPT}
+        ]}]
+      })
+    }).then(function(r){
+      b64=null;                        // foto uit het geheugen
+      if(!r.ok) return r.text().then(function(t){
+        var m='De API gaf een foutmelding ('+r.status+').';
+        if(r.status===401) m='De API-sleutel wordt niet geaccepteerd. Controleer hem in de instellingen.';
+        if(r.status===400 && /credit|balance/i.test(t)) m='Er staat geen tegoed op je API-account.';
+        if(r.status===429) m='Te veel verzoeken achter elkaar. Probeer het over een halve minuut nog eens.';
+        throw new Error(m);
+      });
+      return r.json();
+    });
+  }).then(function(data){
+    var txt=(data.content||[]).filter(function(b){return b.type==='text'}).map(function(b){return b.text}).join('');
+    var m=txt.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error('Kreeg geen bruikbaar antwoord terug. Probeer een foto waarop het eten goed zichtbaar is.');
+    var j=JSON.parse(m[0]);
+    if(!j.naam || /geen eten/i.test(j.naam)) throw new Error('Op deze foto is geen eten herkend. Probeer het nog eens van dichterbij, of voer het handmatig in.');
+    editor({
+      name:j.naam,
+      kcal:num(j.kcal), p:num(j.eiwit), c:num(j.koolhydraten), f:num(j.vet),
+      note:j.toelichting||''
+    },'Kloppen deze waardes?','Een schatting. Pas gerust aan voordat je hem opslaat.');
+  }).catch(function(err){
+    $('#editBody').innerHTML=
+      '<h2>Dat lukte niet</h2>'+
+      '<div class="err" style="margin-top:14px">'+esc(err.message||'Onbekende fout.')+'</div>'+
+      '<button class="btn sec" id="eManual">Handmatig invoeren</button>'+
+      '<button class="link" id="eCancel">Sluiten</button>';
+    $('#eCancel').addEventListener('click',close);
+    $('#eManual').addEventListener('click',function(){editor({},'Handmatig invoeren',null)});
+  });
+}
+
+/* ------------ instellingen ------------ */
+$('#cfgBtn').addEventListener('click',function(){
+  $('#gKcal').value=goals.kcal; $('#gP').value=goals.p; $('#gC').value=goals.c; $('#gF').value=goals.f;
+  $('#key').value=cfg.key; $('#model').value=cfg.model;
+  show('#sCfg');
+});
+$('#cfgSave').addEventListener('click',function(){
+  goals={kcal:num($('#gKcal').value),p:num($('#gP').value),c:num($('#gC').value),f:num($('#gF').value)};
+  cfg={key:$('#key').value.trim(),model:$('#model').value};
+  put(K.g,goals);put(K.c,cfg);render();close();toast('Bewaard');
+});
+
+$('#expo').addEventListener('click',function(){
+  var blob=new Blob([JSON.stringify({entries:entries,goals:goals,export:new Date().toISOString()},null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='eetlog-'+iso(new Date())+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+});
+$('#impo').addEventListener('click',function(){$('#impf').value='';$('#impf').click()});
+$('#impf').addEventListener('change',function(e){
+  var f=e.target.files&&e.target.files[0];if(!f)return;
+  var fr=new FileReader();
+  fr.onload=function(){
+    try{
+      var d=JSON.parse(fr.result);
+      if(!Array.isArray(d.entries))throw 0;
+      var have={};entries.forEach(function(x){have[x.id]=1});
+      var added=0;
+      d.entries.forEach(function(x){if(x&&x.id&&!have[x.id]){entries.push(x);added++}});
+      if(d.goals)goals=d.goals;
+      put(K.e,entries);put(K.g,goals);render();close();
+      toast(added+' regels toegevoegd');
+    }catch(err){toast('Dit bestand kon ik niet lezen')}
+  };
+  fr.readAsText(f);
+});
+$('#wipe').addEventListener('click',function(){
+  if(!confirm('Het hele log, je doelen en je API-sleutel worden gewist. Dit kan niet ongedaan gemaakt worden.'))return;
+  localStorage.removeItem(K.e);localStorage.removeItem(K.g);localStorage.removeItem(K.c);
+  entries=[];goals={kcal:2200,p:140,c:230,f:70};cfg={key:'',model:'claude-haiku-4-5-20251001'};
+  render();close();toast('Gewist');
+});
+
+/* ------------ icoon voor het beginscherm ------------ */
+(function(){
+  try{
+    var c=document.createElement('canvas');c.width=c.height=180;
+    var x=c.getContext('2d');
+    x.fillStyle='#16232B';x.fillRect(0,0,180,180);
+    x.fillStyle='#F2B231';x.beginPath();x.arc(90,90,52,0,6.284);x.fill();
+    x.fillStyle='#16232B';x.beginPath();x.arc(90,90,25,0,6.284);x.fill();
+    var l=document.createElement('link');
+    l.rel='apple-touch-icon';l.href=c.toDataURL('image/png');
+    document.head.appendChild(l);
+  }catch(e){}
+})();
+
+render();
+})();
+</script>
+</body>
+</html>
