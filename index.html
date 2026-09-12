@@ -86,6 +86,22 @@ button{background:none;border:0;padding:0;cursor:pointer}
 .week .now em{color:var(--ink)}
 
 /* ---- logregels ---- */
+.wrow{display:flex;align-items:center;gap:12px;width:100%;margin:22px 0 0;padding:14px 14px;background:var(--raise);border:1px solid var(--line);border-radius:12px;text-align:left}
+.wrow .lbl{font-size:12px;color:var(--mute)}
+.wrow .val{font-size:17px;font-variant-numeric:tabular-nums;margin-top:2px}
+.wrow .dlt{margin-left:auto;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;text-align:right}
+.wrow .dlt b{display:block;font-size:14px;font-weight:500;color:var(--ink)}
+.wrow:active{background:var(--line)}
+.chartbox{margin:4px 0 18px}
+.chartbox svg{width:100%;height:auto;display:block}
+.segs{display:flex;gap:6px;margin:0 0 14px}
+.segs button{flex:1;padding:8px 0;font-size:12px;border:1px solid var(--line);border-radius:8px;color:var(--mute)}
+.segs button.on{background:var(--ground);color:var(--ink);border-color:var(--mute)}
+.wlist{list-style:none;margin:8px 0 0;padding:0}
+.wlist li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line);font-size:14px}
+.wlist .d{color:var(--mute);font-size:12px;width:78px;flex:none}
+.wlist .v{font-variant-numeric:tabular-nums;flex:1}
+.wlist button{color:var(--alarm);font-size:12px}
 .rule{height:1px;background:var(--line);margin:26px 0 0}
 .log{list-style:none;margin:0;padding:0}
 .log li{display:grid;grid-template-columns:46px 1fr auto;gap:12px;padding:15px 0;border-bottom:1px solid var(--line);align-items:baseline}
@@ -148,6 +164,22 @@ button{background:none;border:0;padding:0;cursor:pointer}
 .note{background:var(--ground);border:1px solid var(--line);border-radius:10px;padding:12px 13px;font-size:13px;color:var(--mute);line-height:1.55;margin:0 0 18px}
 .hint{font-size:12px;color:var(--mute);line-height:1.5;margin:-6px 0 16px}
 
+.srch{position:sticky;top:0;background:var(--raise);padding:0 0 12px;z-index:2;margin:0 0 4px}
+.srch input{width:100%;background:var(--ground);border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:16px}
+.hits{list-style:none;margin:0;padding:0}
+.hits li{display:flex;justify-content:space-between;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line);align-items:baseline}
+.hits .h-n{font-size:15px}
+.hits .h-s{font-size:12px;color:var(--mute);margin-top:3px}
+.hits .h-k{font-variant-numeric:tabular-nums;font-size:14px;white-space:nowrap;color:var(--mute)}
+.hits li:active{background:var(--ground)}
+.tag{font-size:10px;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--yolk);margin-left:7px;position:relative;top:-1px}
+.pchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.pchip{background:var(--ground);border:1px solid var(--line);border-radius:16px;padding:8px 13px;font-size:13px}
+.pchip.on{background:var(--yolk);color:var(--ground);border-color:var(--yolk);font-weight:500}
+.prev{display:flex;gap:14px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 0 18px}
+.prev div{flex:1}
+.prev b{display:block;font-size:20px;font-variant-numeric:tabular-nums;font-weight:500;line-height:1.2}
+.prev span{font-size:11px;color:var(--mute)}
 .spin{display:flex;align-items:center;gap:12px;padding:26px 0 10px;color:var(--mute);font-size:14px}
 .spin i{width:17px;height:17px;border:2px solid var(--line);border-top-color:var(--yolk);border-radius:50%;animation:sp .7s linear infinite;flex:none}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -181,6 +213,11 @@ button{background:none;border:0;padding:0;cursor:pointer}
 
   <div class="week" id="week"></div>
 
+  <button class="wrow" id="wrow">
+    <span><span class="lbl">Gewicht</span><span class="val" id="wVal">—</span></span>
+    <span class="dlt" id="wDlt"></span>
+  </button>
+
   <div class="rule"></div>
   <ul class="log" id="log"></ul>
   <div class="empty" id="empty" hidden>Nog niets vandaag. Maak een foto van je bord, of voer het handmatig in.</div>
@@ -193,14 +230,57 @@ button{background:none;border:0;padding:0;cursor:pointer}
 
 <div class="dock">
   <div class="in">
-    <button class="btn pri" id="primary">Plakken</button>
-    <button class="btn sec" id="manual">Handmatig</button>
+    <button class="btn pri" id="primary">Zoeken</button>
+    <button class="btn sec" id="second">Plakken</button>
   </div>
 </div>
 
 <input type="file" id="file" accept="image/*" hidden>
 
 <div class="veil" id="veil"></div>
+
+<!-- zoeken -->
+<div class="sheet" id="sFind">
+  <div class="grab"></div>
+  <div class="srch"><input id="q" placeholder="Zoek: kwark, banaan, cola…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"></div>
+  <ul class="hits" id="hits"></ul>
+  <button class="link" id="newOwn">Eigen product toevoegen</button>
+  <button class="link" id="toManual">Eenmalig handmatig invoeren</button>
+</div>
+
+<!-- portie kiezen -->
+<div class="sheet" id="sPort">
+  <div class="grab"></div>
+  <div id="portBody"></div>
+</div>
+
+<!-- gewicht -->
+<div class="sheet" id="sWeight">
+  <div class="grab"></div>
+  <div id="wBody"></div>
+</div>
+
+<!-- eigen product -->
+<div class="sheet" id="sOwn">
+  <div class="grab"></div>
+  <h2>Eigen product</h2>
+  <p class="lead">Neem de waardes over van de verpakking. Daarna staat het product permanent in je zoeklijst.</p>
+  <div class="fld"><label for="oN">Naam</label><input id="oN" placeholder="Bijv. Jumbo kwark vanille"></div>
+  <div class="fld"><label for="oU">Waardes gelden per</label><select id="oU">
+    <option value="g">100 gram</option>
+    <option value="ml">100 milliliter</option>
+    <option value="st">1 stuk of portie</option>
+  </select></div>
+  <div class="fld"><label for="oK">Calorieën (kcal)</label><input id="oK" type="number" inputmode="decimal"></div>
+  <div class="row">
+    <div class="fld"><label for="oP">Eiwit (g)</label><input id="oP" type="number" inputmode="decimal"></div>
+    <div class="fld"><label for="oC">Koolh. (g)</label><input id="oC" type="number" inputmode="decimal"></div>
+    <div class="fld"><label for="oF">Vet (g)</label><input id="oF" type="number" inputmode="decimal"></div>
+  </div>
+  <div class="fld" id="oPortWrap"><label for="oPo">Standaardportie in gram of ml</label><input id="oPo" type="number" inputmode="numeric" placeholder="Bijv. 150"></div>
+  <button class="btn pri" id="oSave">Bewaren</button>
+  <button class="link" id="oCancel">Annuleren</button>
+</div>
 
 <!-- controleren / bewerken -->
 <div class="sheet" id="sEdit">
@@ -235,6 +315,15 @@ button{background:none;border:0;padding:0;cursor:pointer}
     <div class="fld"><label for="gF">Vet (g)</label><input type="number" inputmode="numeric" id="gF"></div>
   </div>
 
+  <div class="fld"><label for="gKg">Streefgewicht in kg (optioneel)</label><input type="number" inputmode="decimal" step="0.1" id="gKg" placeholder="Leeg laten als je alleen wilt volgen"></div>
+
+  <h2 style="font-size:15px;margin:26px 0 12px">Voor de vetberekening</h2>
+  <div class="row">
+    <div class="fld"><label for="sSex">Geslacht</label><select id="sSex"><option value="m">Man</option><option value="v">Vrouw</option></select></div>
+    <div class="fld"><label for="sLen">Lengte (cm)</label><input id="sLen" type="number" inputmode="numeric" placeholder="183"></div>
+  </div>
+  <p class="hint">Alleen nodig als je je vetpercentage met een meetlint wilt laten uitrekenen.</p>
+
   <h2 style="font-size:15px;margin:26px 0 12px">Foto's omzetten</h2>
   <div class="fld"><label for="prim">Grote knop onderin</label><select id="prim">
     <option value="plak">Plakken — via de Claude-app, gratis</option>
@@ -265,7 +354,7 @@ button{background:none;border:0;padding:0;cursor:pointer}
 'use strict';
 
 /* ------------ opslag ------------ */
-var K={e:'eetlog.entries',g:'eetlog.goals',c:'eetlog.cfg'};
+var K={e:'eetlog.entries',g:'eetlog.goals',c:'eetlog.cfg',o:'eetlog.own',w:'eetlog.weight'};
 function get(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast('Opslaan mislukt — geheugen vol?');return false}}
 
@@ -273,6 +362,7 @@ var entries=get(K.e,[]);
 var goals=get(K.g,{kcal:2200,p:140,c:230,f:70});
 var cfg=get(K.c,{key:'',model:'claude-haiku-4-5-20251001',primary:'plak'});
 if(!cfg.primary)cfg.primary='plak';
+var weights=get(K.w,[]);
 var cursor=new Date();
 
 /* ------------ hulpjes ------------ */
@@ -283,6 +373,7 @@ function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'
 function nl(n){return Math.round(n||0).toLocaleString('nl-NL')}
 function num(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)&&n>0?Math.round(n):0}
 function fv(v){return (v==null||v==='')?'':String(v)}
+function fnum(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)&&n>0?n:0}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML}
 
@@ -374,7 +465,8 @@ function render(){
   }).join('');
   $('#chips').repeat=top.map(function(o){return o.x});
 
-  $('#primary').textContent=cfg.primary==='foto'?'Foto':'Plakken';
+  $('#second').textContent=cfg.primary==='foto'?'Foto':'Plakken';
+  weightSummary();
 }
 
 /* ------------ navigatie ------------ */
@@ -457,7 +549,477 @@ function editor(vals,title,lead){
   });
 }
 
-$('#manual').addEventListener('click',function(){editor({},'Handmatig invoeren',null)});
+/* naam|kcal|eiwit|kh|vet (per 100 g/ml)|eenheid|porties in g of ml met label */
+var RAW=[
+/* zuivel */
+"Magere kwark|57|10|4|0.2|g|100:100 g;150:bakje;250:250 g;500:pak",
+"Halfvolle kwark|80|9.3|3.9|3.2|g|100:100 g;150:bakje;500:pak",
+"Volle kwark|122|7.5|3.5|9|g|100:100 g;150:bakje;500:pak",
+"Kwark met vruchten|90|7|11|1.5|g|150:bakje;500:pak",
+"Skyr|63|11|4|0.2|g|150:bakje;450:pak",
+"Griekse yoghurt vol|133|4|4|10|g|150:schaaltje;500:pak",
+"Griekse yoghurt mager|59|9|4|0.4|g|150:schaaltje;500:pak",
+"Magere yoghurt|41|4.2|5.5|0.1|g|150:schaaltje;250:kom",
+"Volle yoghurt|62|3.5|4.5|3.3|g|150:schaaltje;250:kom",
+"Vruchtenyoghurt|85|3.2|13|2|g|150:schaaltje;250:kom",
+"Karnemelk|35|3.4|4|0.5|ml|250:glas;500:pak",
+"Magere melk|35|3.5|4.9|0.1|ml|150:kopje;250:glas",
+"Halfvolle melk|47|3.5|4.8|1.5|ml|150:kopje;250:glas",
+"Volle melk|64|3.4|4.6|3.5|ml|150:kopje;250:glas",
+"Sojadrink ongezoet|33|3.3|0.6|1.8|ml|250:glas",
+"Havermelk|45|0.4|6.6|1.5|ml|250:glas",
+"Amandelmelk ongezoet|13|0.5|0.1|1.1|ml|250:glas",
+"Chocolademelk|78|3.4|11|2.2|ml|250:glas;300:pakje",
+"Vla vanille|97|3.2|15|2.7|ml|150:schaaltje;250:kom",
+"Slagroom|337|2.1|3|35|ml|30:toef",
+"Creme fraiche|200|2.4|3|20|g|30:lepel;125:bakje",
+"Huttenkase|98|11|3|4.3|g|100:100 g;200:bakje",
+"Mozzarella|254|18|1|20|g|125:bol",
+"Jonge kaas 48+|380|24|0.5|31|g|20:plak",
+"Belegen kaas|400|25|0.5|33|g|20:plak",
+"Kaas 30+|275|30|0.5|17|g|20:plak",
+"Geitenkaas|364|22|1|30|g|30:plakje",
+"Feta|264|14|1.5|21|g|30:blokjes;50:50 g",
+"Roomkaas|253|6|4|24|g|20:mesje",
+"Smeerkaas|240|13|3|20|g|20:mesje",
+"Parmezaanse kaas|402|33|4|27|g|10:eetlepel",
+"Brie|334|21|0.5|28|g|30:puntje",
+/* eieren */
+"Ei gekookt|143|13|1.1|9.5|g|55:1 ei;110:2 eieren;165:3 eieren",
+"Ei gebakken|196|14|0.8|15|g|60:1 ei;120:2 eieren",
+"Eiwit|52|11|0.7|0.2|g|33:1 eiwit;100:100 g",
+"Omelet|154|11|1|12|g|150:2 eieren",
+/* vlees */
+"Kipfilet bereid|165|31|0|3.6|g|100:100 g;150:filet",
+"Kipdijfilet|209|26|0|11|g|100:100 g;150:portie",
+"Kipgehakt|143|20|0|7|g|100:100 g",
+"Rundergehakt|250|18|0|20|g|100:100 g;125:portie",
+"Mager rundergehakt|176|20|0|11|g|100:100 g;125:portie",
+"Half-om-half gehakt|268|17|1|22|g|100:100 g;125:portie",
+"Biefstuk|158|29|0|4.4|g|125:biefstuk;150:groot",
+"Runderlap|220|27|0|12|g|125:lap",
+"Hamburger rund|250|18|3|18|g|100:burger",
+"Varkenshaas|143|22|0|6|g|125:portie",
+"Speklap|330|17|0|29|g|100:lap",
+"Ontbijtspek gebakken|400|30|0|31|g|20:2 plakjes",
+"Ham|105|18|1|3|g|15:plakje;30:2 plakjes",
+"Kipfilet vleeswaren|110|21|1|2|g|15:plakje;30:2 plakjes",
+"Salami|407|21|1.5|35|g|15:2 plakjes",
+"Rookworst|300|12|1|27|g|75:halve;150:hele",
+"Knakworst|260|11|1|23|g|50:2 stuks",
+"Shoarmavlees|220|20|2|15|g|100:100 g;150:portie",
+"Gyros|215|20|2|14|g|100:100 g;150:portie",
+"Kipsate|190|22|4|9|g|100:2 stokjes",
+/* vis */
+"Zalm|208|20|0|13|g|125:filet",
+"Gerookte zalm|180|22|0|10|g|50:50 g;100:pakje",
+"Tonijn in water|116|26|0|1|g|80:blikje;145:groot blik",
+"Tonijn in olie|190|25|0|10|g|80:blikje",
+"Kabeljauw|82|18|0|0.7|g|125:filet",
+"Pangasius|90|15|0|3|g|125:filet",
+"Tilapia|96|20|0|1.7|g|125:filet",
+"Garnalen|99|21|0|1|g|100:100 g",
+"Haring|220|18|0|16|g|100:1 haring",
+"Makreel gerookt|250|19|0|19|g|100:filet",
+"Sardines in blik|208|25|0|11|g|90:blikje",
+"Kibbeling|260|15|18|14|g|150:portie",
+"Vissticks|220|13|18|11|g|30:1 stick;90:3 sticks",
+/* vega en peulvruchten */
+"Tofu naturel|76|8|1.9|4.8|g|100:100 g;180:pakje",
+"Tempeh|193|19|9|11|g|100:100 g",
+"Seitan|141|25|4|2|g|100:100 g",
+"Vegetarische burger|200|15|10|11|g|90:burger",
+"Falafel|333|13|32|18|g|60:3 balletjes",
+"Hummus|166|8|14|10|g|30:lepel;100:100 g",
+"Kikkererwten uit blik|120|7|18|2|g|100:100 g;240:blik",
+"Bruine bonen|106|7|15|0.5|g|100:100 g;200:portie",
+"Witte bonen in tomatensaus|92|6|14|0.5|g|200:portie;400:blik",
+"Kidneybonen|100|7|14|0.5|g|100:100 g;240:blik",
+"Linzen gekookt|116|9|20|0.4|g|100:100 g;200:portie",
+"Quorn|105|15|4|3|g|100:100 g",
+/* brood en granen */
+"Witbrood|265|9|49|3|g|35:snee;70:2 sneetjes",
+"Bruinbrood|245|9|43|3|g|35:snee;70:2 sneetjes",
+"Volkorenbrood|240|10|38|3.5|g|35:snee;70:2 sneetjes",
+"Roggebrood|220|6|41|1.5|g|35:snee",
+"Krentenbol|280|8|52|4|g|60:1 bol",
+"Croissant|406|8|46|21|g|55:1 croissant",
+"Bagel|275|11|53|1.5|g|85:1 bagel",
+"Pistolet|280|9|52|3|g|60:1 pistolet",
+"Beschuit|400|11|72|6|g|10:1 beschuit;20:2 stuks",
+"Cracker|430|10|65|13|g|8:1 cracker",
+"Knackebrod|340|10|65|2|g|10:1 stuk",
+"Rijstwafel|387|8|81|3|g|9:1 wafel;18:2 wafels",
+"Havermout droog|375|13|58|7|g|40:kom;60:grote kom",
+"Muesli|360|10|60|8|g|45:portie",
+"Granola|450|9|60|18|g|45:portie",
+"Cornflakes|378|7|84|1|g|30:portie",
+"Brinta|350|12|64|2|g|40:portie",
+"Couscous gekookt|112|3.8|23|0.2|g|150:portie",
+"Bulgur gekookt|83|3|19|0.2|g|150:portie",
+"Quinoa gekookt|120|4.4|21|1.9|g|150:portie",
+"Witte rijst gekookt|130|2.7|28|0.3|g|150:portie;200:grote portie",
+"Zilvervliesrijst gekookt|111|2.6|23|0.9|g|150:portie",
+"Pasta gekookt|158|6|31|0.9|g|200:portie;250:grote portie",
+"Volkoren pasta gekookt|124|5|26|0.5|g|200:portie",
+"Mie|138|4.5|25|2|g|200:portie",
+"Aardappel gekookt|87|2|20|0.1|g|150:3 aardappels;200:portie",
+"Gebakken aardappelen|150|2.5|24|5|g|200:portie",
+"Friet uit de frituur|290|3.4|36|14|g|150:portie;200:medium",
+"Aardappelpuree|108|2|15|4|g|200:portie",
+"Zoete aardappel|90|2|21|0.1|g|150:portie",
+"Wrap tortilla|300|8|48|8|g|62:1 wrap",
+"Pizza margherita|266|11|33|10|g|125:halve;250:hele",
+"Pannenkoek|227|6|28|10|g|100:1 pannenkoek",
+/* fruit */
+"Banaan|89|1.1|23|0.3|g|120:1 stuk;80:klein;150:groot",
+"Appel|52|0.3|14|0.2|g|150:1 stuk",
+"Peer|57|0.4|15|0.1|g|170:1 stuk",
+"Sinaasappel|47|0.9|12|0.1|g|150:1 stuk",
+"Mandarijn|53|0.8|13|0.3|g|75:1 stuk;150:2 stuks",
+"Druiven|69|0.7|18|0.2|g|100:handje;150:trosje",
+"Aardbeien|32|0.7|7.7|0.3|g|150:schaaltje;250:bakje",
+"Blauwe bessen|57|0.7|14|0.3|g|100:handje;125:bakje",
+"Frambozen|52|1.2|12|0.7|g|125:bakje",
+"Kiwi|61|1.1|15|0.5|g|80:1 stuk",
+"Ananas|50|0.5|13|0.1|g|150:schijven",
+"Mango|60|0.8|15|0.4|g|150:halve;300:hele",
+"Meloen|34|0.8|8|0.2|g|200:partje",
+"Watermeloen|30|0.6|8|0.2|g|200:partje",
+"Perzik|39|0.9|10|0.3|g|150:1 stuk",
+"Nectarine|44|1.1|11|0.3|g|140:1 stuk",
+"Pruim|46|0.7|11|0.3|g|60:1 stuk",
+"Kersen|63|1.1|16|0.2|g|100:handje",
+"Dadel medjoul|277|1.8|75|0.2|g|24:1 dadel;72:3 dadels",
+"Dadel gedroogd|282|2.5|75|0.4|g|8:1 dadel;40:handje",
+"Rozijnen|299|3.1|79|0.5|g|30:handje",
+"Gedroogde abrikoos|241|3.4|63|0.5|g|30:handje",
+"Vijg gedroogd|249|3.3|64|0.9|g|20:1 vijg",
+"Avocado|160|2|9|15|g|100:halve;200:hele",
+"Granaatappel|83|1.7|19|1.2|g|100:halve",
+/* groente */
+"Tomaat|18|0.9|3.9|0.2|g|120:1 stuk",
+"Cherrytomaatjes|18|0.9|3.9|0.2|g|80:handje",
+"Komkommer|15|0.7|3.6|0.1|g|100:stuk of 3",
+"Paprika|31|1|6|0.3|g|150:1 stuk",
+"Wortel|41|0.9|10|0.2|g|80:1 wortel;150:portie",
+"Broccoli|34|2.8|7|0.4|g|150:portie;200:grote portie",
+"Bloemkool|25|1.9|5|0.3|g|150:portie;200:grote portie",
+"Spinazie|23|2.9|3.6|0.4|g|100:handje;200:portie",
+"Sla|15|1.4|2.9|0.2|g|50:kom",
+"Rucola|25|2.6|3.7|0.7|g|40:handje",
+"Ui|40|1.1|9|0.1|g|80:1 ui",
+"Prei|61|1.5|14|0.3|g|150:portie",
+"Courgette|17|1.2|3.1|0.3|g|150:portie;250:hele",
+"Aubergine|25|1|6|0.2|g|150:portie",
+"Champignons|22|3.1|3.3|0.3|g|100:handje;250:bakje",
+"Sperziebonen|31|1.8|7|0.1|g|150:portie",
+"Doperwten|81|5|14|0.4|g|150:portie",
+"Mais|86|3.2|19|1.2|g|100:portie;150:blikje",
+"Spruitjes|43|3.4|9|0.3|g|150:portie",
+"Boerenkool|49|4.3|9|0.9|g|200:portie",
+"Andijvie|17|1.3|3.4|0.2|g|200:portie",
+"Witlof|17|0.9|4|0.1|g|150:2 stronkjes",
+"Rode kool|31|1.4|7|0.2|g|200:portie",
+"Zuurkool|19|0.9|4|0.1|g|200:portie",
+"Rode biet|43|1.6|10|0.2|g|150:portie",
+"Asperges|20|2.2|3.9|0.1|g|200:portie",
+"Pompoen|26|1|6.5|0.1|g|200:portie",
+/* noten en zaden */
+"Pindas|567|26|16|49|g|25:handje;50:groot handje",
+"Pindakaas|588|25|20|50|g|15:mesje;30:royaal",
+"Amandelen|579|21|22|50|g|25:handje",
+"Cashewnoten|553|18|30|44|g|25:handje",
+"Walnoten|654|15|14|65|g|25:handje",
+"Hazelnoten|628|15|17|61|g|25:handje",
+"Paranoten|656|14|12|66|g|25:handje",
+"Pistachenoten|560|20|28|45|g|25:handje",
+"Gemengde noten|600|18|20|53|g|25:handje;50:groot handje",
+"Zonnebloempitten|584|21|20|51|g|15:lepel",
+"Pompoenpitten|559|30|11|49|g|15:lepel",
+"Chiazaad|486|17|42|31|g|15:lepel",
+"Lijnzaad|534|18|29|42|g|15:lepel",
+"Kokos gedroogd|660|7|24|65|g|15:lepel",
+/* snacks en zoet */
+"Chips naturel|536|6|53|34|g|30:handje;175:zak",
+"Chips paprika|525|6|52|33|g|30:handje;175:zak",
+"Nachos|480|7|60|23|g|50:portie",
+"Zoutjes|470|9|60|21|g|30:handje",
+"Borrelnootjes|520|17|38|33|g|30:handje",
+"Popcorn zoet|430|6|75|13|g|30:handje;100:zak",
+"Melkchocolade|535|7|58|30|g|25:5 blokjes;100:reep",
+"Pure chocolade|546|7|46|38|g|25:5 blokjes;100:reep",
+"Witte chocolade|539|6|59|32|g|25:5 blokjes",
+"Stroopwafel|434|4|65|17|g|35:1 stuk",
+"Speculaas|470|5|72|18|g|10:1 koekje;30:3 koekjes",
+"Tuc cracker|500|8|60|25|g|5:1 koekje;25:5 koekjes;100:pak",
+"Liga evergreen|420|7|68|12|g|25:1 koek",
+"Gevulde koek|420|5|60|18|g|80:1 koek",
+"Appeltaart|250|3|33|12|g|125:punt",
+"Cake|400|5|55|18|g|40:plak",
+"Brownie|470|6|55|25|g|60:1 stuk",
+"Donut|420|6|50|22|g|60:1 stuk",
+"Muffin|380|5|50|18|g|90:1 stuk",
+"Ontbijtkoek|320|4|72|1|g|25:plak",
+"Drop|350|5|80|0.5|g|30:handje",
+"Winegums|340|6|78|0.1|g|30:handje",
+"Vanille-ijs|207|3.5|24|11|g|60:bolletje;120:2 bollen",
+"Magnum|320|4|32|20|g|79:1 stuk",
+/* beleg en vetten */
+"Hagelslag|450|5|75|14|g|15:snee",
+"Jam|250|0.4|60|0.1|g|15:snee",
+"Appelstroop|265|1|63|0.1|g|15:snee",
+"Chocopasta|539|6|58|31|g|15:snee",
+"Honing|304|0.3|82|0|g|15:lepel",
+"Boter|717|0.9|0.1|81|g|7:mesje;10:royaal",
+"Halvarine|360|0.2|0.5|40|g|7:mesje",
+"Mayonaise|680|1|2|75|g|15:lepel;30:royaal",
+"Ketchup|110|1.2|26|0.1|g|15:lepel",
+"Mosterd|66|4|5|3|g|10:lepel",
+"Sambal|60|2|8|1|g|5:theelepel",
+"Sojasaus|60|6|6|0.1|ml|15:lepel",
+"Pesto|450|5|5|45|g|20:lepel",
+"Olijfolie|884|0|0|100|ml|10:eetlepel;20:2 lepels",
+"Zonnebloemolie|884|0|0|100|ml|10:eetlepel",
+/* dranken */
+"Water|0|0|0|0|ml|250:glas;500:flesje;1500:grote fles",
+"Koffie zwart|2|0.1|0|0|ml|125:kopje;250:mok",
+"Koffie met melk|15|1|1.3|0.6|ml|150:kopje;250:mok",
+"Cappuccino|40|2.4|3.5|1.8|ml|180:kopje;250:grote",
+"Latte macchiato|45|2.6|4|2|ml|250:glas",
+"Espresso|3|0.1|0.5|0|ml|30:kopje",
+"Thee|1|0|0.2|0|ml|200:kopje",
+"Cola|42|0|10.6|0|ml|250:glas;330:blikje;500:flesje",
+"Cola zero|0.3|0|0|0|ml|250:glas;330:blikje;500:flesje",
+"Fanta|41|0|10|0|ml|330:blikje",
+"Sprite|37|0|9.2|0|ml|330:blikje",
+"Ice tea|28|0|6.8|0|ml|250:glas;500:flesje",
+"Ice tea green|20|0|4.8|0|ml|250:glas;500:flesje",
+"AA drink|25|0|6|0|ml|500:flesje",
+"Red bull|45|0|11|0|ml|250:blikje",
+"Sinaasappelsap|45|0.7|10|0.2|ml|200:glas",
+"Appelsap|46|0.1|11|0.1|ml|200:glas",
+"Smoothie|60|0.8|13|0.3|ml|250:glas",
+"Pils|43|0.5|3.3|0|ml|250:glas;330:flesje",
+"Speciaalbier|65|0.6|5|0|ml|330:flesje",
+"Witte wijn|82|0.1|2.6|0|ml|150:glas",
+"Rode wijn|85|0.1|2.6|0|ml|150:glas",
+"Prosecco|80|0.1|3|0|ml|100:glas",
+"Whisky|250|0|0|0|ml|35:glaasje",
+"Wodka|231|0|0|0|ml|35:glaasje",
+"Limonade aangelengd|20|0|5|0|ml|250:glas",
+"Eiwitshake met water|40|8|1|0.5|ml|300:shaker",
+/* kant en klaar */
+"Frikandel|300|11|12|24|g|75:1 stuk",
+"Kroket|240|7|22|14|g|70:1 stuk",
+"Kaassouffle|320|9|25|20|g|60:1 stuk",
+"Bitterbal|250|8|20|15|g|20:1 stuk;120:6 stuks",
+"Loempia|220|6|25|11|g|100:1 stuk",
+"Patat met mayonaise|350|3.5|33|22|g|200:medium",
+"Big mac|257|13|20|14|g|219:1 stuk",
+"Mcchicken|250|11|25|12|g|173:1 stuk",
+"Whopper|240|12|18|13|g|270:1 stuk",
+"Kapsalon|200|10|15|11|g|500:halve;800:hele",
+"Shoarmabroodje|230|13|22|10|g|250:1 broodje",
+"Nasi goreng|150|6|20|5|g|300:portie",
+"Bami goreng|145|6|19|5|g|300:portie",
+"Pasta bolognese|130|7|15|4|g|350:portie",
+"Sushi|145|5|30|1|g|200:8 stuks",
+"Tomatensoep|35|1|5|1|ml|250:kom",
+"Groentesoep|25|1|4|0.5|ml|250:kom",
+"Erwtensoep|80|5|9|3|ml|300:kom",
+/* sport */
+"Whey-eiwitpoeder|400|80|6|6|g|30:schep;60:2 scheppen",
+"Eiwitreep|350|30|35|10|g|60:1 reep"
+];
+
+var ALIAS={
+"Pils":"bier pilsje","Speciaalbier":"bier","Cola zero":"light suikervrij",
+"Tuc cracker":"tuk zoutje borrel","Jonge kaas 48+":"kaas boterham","Belegen kaas":"kaas boterham",
+"Kaas 30+":"kaas magere boterham","Huttenkase":"cottage cheese","Sinaasappelsap":"jus dorange ju",
+"Friet uit de frituur":"patat","Patat met mayonaise":"friet snackbar","Frikandel":"snackbar",
+"Kroket":"snackbar","Kaassouffle":"snackbar","Aardappel gekookt":"piepers",
+"Kipfilet bereid":"kip","Kipdijfilet":"kip","Kipgehakt":"kip","Kipsate":"kip sate",
+"Witbrood":"boterham brood snee","Bruinbrood":"boterham brood snee","Volkorenbrood":"boterham brood snee",
+"Cappuccino":"koffie","Latte macchiato":"koffie","Espresso":"koffie","Koffie met melk":"koffie verkeerd",
+"Melkchocolade":"chocola reep tony","Pure chocolade":"chocola reep","Witte chocolade":"chocola reep",
+"Magnum":"ijs ijsje","Vanille-ijs":"ijsje","Mandarijn":"clementine","Blauwe bessen":"bosbessen",
+"Pindas":"pinda","Whey-eiwitpoeder":"proteine shake whey","Eiwitshake met water":"proteine shake",
+"Eiwitreep":"proteine reep","Big mac":"mcdonalds hamburger","Mcchicken":"mcdonalds",
+"Whopper":"burger king hamburger","Boerenkool":"stamppot","Zuurkool":"stamppot",
+"Ei gekookt":"eitje eieren","Ei gebakken":"eieren spiegelei","Magere kwark":"kwark",
+"Rundergehakt":"gehaktbal","Hagelslag":"chocoladehagel","Halvarine":"margarine becel",
+"Havermout droog":"porridge oatmeal","Rijstwafel":"wafel","Knackebrod":"crackers",
+"Volle melk":"melk","Halfvolle melk":"melk","Magere melk":"melk","Water":"kraanwater bronwater"
+};
+var FOOD=RAW.map(function(s){
+  var p=s.split('|');
+  return {n:p[0],k:+p[1],p:+p[2],c:+p[3],f:+p[4],u:p[5],b:100,
+          po:p[6].split(';').map(function(x){var q=x.split(':');return [+q[0],q[1]]})};
+});
+
+/* eigen producten */
+var own=get(K.o,[]);
+function allFood(){return own.concat(FOOD)}
+
+function fold(s){
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+function haystack(it){
+  if(!it._h) it._h=fold(it.n+' '+(it.own?'':(ALIAS[it.n]||'')));
+  return it._h;
+}
+function search(q){
+  var all=allFood();
+  q=fold(q);
+  if(!q) return all.slice(0,30);
+  var words=q.split(' ');
+  var out=[];
+  all.forEach(function(it){
+    var h=haystack(it), nm=fold(it.n);
+    for(var i=0;i<words.length;i++){if(h.indexOf(words[i])<0)return}
+    var rank;
+    if(nm===q) rank=0;
+    else if(nm.indexOf(q)===0) rank=1;
+    else if((' '+nm).indexOf(' '+words[0])>=0) rank=2;
+    else if((' '+h).indexOf(' '+words[0])>=0) rank=3;
+    else if(nm.indexOf(words[0])>=0) rank=4;
+    else rank=5;
+    out.push([rank,nm.length,it]);
+  });
+  out.sort(function(a,b){return a[0]-b[0]||a[1]-b[1]});
+  return out.slice(0,40).map(function(x){return x[2]});
+}
+
+function scale(it,amount){
+  var r=amount/it.b;
+  return {kcal:Math.round(it.k*r),p:Math.round(it.p*r),c:Math.round(it.c*r),f:Math.round(it.f*r)};
+}
+function unitLabel(it){return it.u==='st'?'stuks':it.u}
+
+function drawHits(){
+  var list=search($('#q').value);
+  if(!list.length){
+    $('#hits').innerHTML='<li style="border:0;color:var(--mute);font-size:14px;padding:22px 2px">Niets gevonden. Voeg het toe als eigen product, of voer het eenmalig handmatig in.</li>';
+    return;
+  }
+  $('#hits').innerHTML=list.map(function(it,i){
+    var d=it.po[0], s=scale(it,d[0]);
+    var sub=it.u==='st' ? d[1] : d[1]+' · '+nl(d[0])+' '+it.u;
+    return '<li data-i="'+i+'"><span><span class="h-n">'+esc(it.n)+
+      (it.own?'<span class="tag">eigen</span>':'')+'</span>'+
+      '<div class="h-s">'+esc(sub)+'</div></span>'+
+      '<span class="h-k">'+nl(s.kcal)+' kcal</span></li>';
+  }).join('');
+  $('#hits').hits=list;
+}
+
+function openFind(){
+  $('#q').value='';
+  drawHits();
+  show('#sFind');
+  setTimeout(function(){$('#q').focus()},330);
+}
+$('#q').addEventListener('input',drawHits);
+$('#hits').addEventListener('click',function(e){
+  var li=e.target.closest('li[data-i]');if(!li)return;
+  portion($('#hits').hits[+li.dataset.i]);
+});
+$('#toManual').addEventListener('click',function(){close();setTimeout(function(){editor({},'Handmatig invoeren',null)},260)});
+
+/* portie kiezen */
+function portion(it){
+  var amount=it.po[0][0];
+
+  function paint(){
+    var s=scale(it,amount);
+    $('#portBody').innerHTML=
+      '<h2>'+esc(it.n)+'</h2>'+
+      '<p class="lead">Per '+(it.u==='st'?'stuk':'100 '+it.u)+': '+nl(it.k)+' kcal</p>'+
+      '<div class="pchips">'+it.po.map(function(p){
+        return '<button class="pchip'+(p[0]===amount?' on':'')+'" data-a="'+p[0]+'">'+esc(p[1])+'</button>';
+      }).join('')+'</div>'+
+      '<div class="fld"><label for="pa">Hoeveelheid in '+unitLabel(it)+'</label>'+
+        '<input id="pa" type="number" inputmode="decimal" value="'+amount+'"></div>'+
+      '<div class="prev">'+
+        '<div><b>'+nl(s.kcal)+'</b><span>kcal</span></div>'+
+        '<div><b>'+nl(s.p)+'</b><span>eiwit g</span></div>'+
+        '<div><b>'+nl(s.c)+'</b><span>koolh. g</span></div>'+
+        '<div><b>'+nl(s.f)+'</b><span>vet g</span></div>'+
+      '</div>'+
+      '<button class="btn pri" id="paGo">Toevoegen</button>'+
+      (it.own?'<button class="link danger" id="paDel">Dit eigen product verwijderen</button>':'')+
+      '<button class="link" id="paBack">Terug naar zoeken</button>';
+
+    $('#portBody').querySelectorAll('.pchip').forEach(function(b){
+      b.addEventListener('click',function(){amount=+b.dataset.a;paint()});
+    });
+    var inp=$('#pa');
+    inp.addEventListener('input',function(){
+      var v=fnum(inp.value);if(!v)return;
+      amount=v;
+      var s2=scale(it,amount);
+      var cells=$('#portBody').querySelectorAll('.prev b');
+      cells[0].textContent=nl(s2.kcal);cells[1].textContent=nl(s2.p);
+      cells[2].textContent=nl(s2.c);cells[3].textContent=nl(s2.f);
+      $('#portBody').querySelectorAll('.pchip').forEach(function(b){
+        b.classList.toggle('on',+b.dataset.a===amount);
+      });
+    });
+    $('#paGo').addEventListener('click',function(){
+      var v=fnum($('#pa').value);
+      if(!v){$('#pa').focus();return}
+      var s3=scale(it,v);
+      var lbl=null;
+      it.po.forEach(function(p){if(p[0]===v)lbl=p[1]});
+      var naam=it.n+(it.u==='st'
+        ? (v===1?'':' ('+v+'x)')
+        : ' ('+(lbl?lbl+', ':'')+nl(v)+' '+it.u+')');
+      save({name:naam,kcal:s3.kcal,p:s3.p,c:s3.c,f:s3.f});
+      close();toast('Toegevoegd');
+    });
+    if(it.own)$('#paDel').addEventListener('click',function(){
+      if(!confirm('"'+it.n+'" uit je eigen producten verwijderen?'))return;
+      own=own.filter(function(x){return x.id!==it.id});
+      put(K.o,own);close();toast('Verwijderd');
+    });
+    $('#paBack').addEventListener('click',function(){close();setTimeout(openFind,260)});
+  }
+
+  close();
+  setTimeout(function(){paint();show('#sPort')},260);
+}
+
+/* eigen product aanmaken */
+$('#newOwn').addEventListener('click',function(){
+  ['oN','oK','oP','oC','oF','oPo'].forEach(function(id){$('#'+id).value=''});
+  $('#oU').value='g';$('#oPortWrap').hidden=false;
+  close();setTimeout(function(){show('#sOwn');setTimeout(function(){$('#oN').focus()},330)},260);
+});
+$('#oU').addEventListener('change',function(){$('#oPortWrap').hidden=this.value==='st'});
+$('#oCancel').addEventListener('click',close);
+$('#oSave').addEventListener('click',function(){
+  var n=$('#oN').value.trim();
+  if(!n){$('#oN').focus();toast('Geef even een naam op');return}
+  var u=$('#oU').value, st=u==='st';
+  var it={
+    id:uid(),own:true,n:n,
+    k:fnum($('#oK').value),p:fnum($('#oP').value),
+    c:fnum($('#oC').value),f:fnum($('#oF').value),
+    u:st?'st':u, b:st?1:100,
+    po: st ? [[1,'1 stuk'],[2,'2 stuks']] : (function(){
+      var d=Math.round(fnum($('#oPo').value))||100;
+      var l=[[d,'portie']];
+      if(d!==100)l.push([100,'100 '+u]);
+      return l;
+    })()
+  };
+  own.unshift(it);put(K.o,own);
+  close();toast('Product bewaard');
+  setTimeout(function(){portion(it)},280);
+});
 
 /* ------------ plakken vanuit de Claude-app ------------ */
 var ASK=
@@ -526,15 +1088,204 @@ $('#pGo').addEventListener('click',function(){
   close();toast(list.length+' maaltijden toegevoegd');
 });
 
-/* ------------ hoofdknop ------------ */
-function primaryAction(){
+/* ------------ gewicht ------------ */
+function dnum(s){return Math.floor(Date.parse(s+'T00:00:00')/86400000)}
+function kgf(v){return (Math.round(v*10)/10).toFixed(1).replace('.',',')}
+function sortW(){weights.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0})}
+
+/* voortschrijdend gemiddelde over een venster van n dagen */
+function movavg(list,key,n){
+  return list.map(function(pt,i){
+    var t0=dnum(pt.d)-(n-1), s=0, c=0;
+    for(var j=i;j>=0;j--){
+      if(dnum(list[j].d)<t0)break;
+      if(list[j][key]!=null){s+=list[j][key];c++}
+    }
+    return c?s/c:null;
+  });
+}
+function series(key){
+  sortW();
+  return weights.filter(function(x){return x[key]!=null&&isFinite(x[key])});
+}
+
+function weightSummary(){
+  var s=series('kg');
+  if(!s.length){$('#wVal').textContent='—';$('#wDlt').innerHTML='<span>nog niets gemeten</span>';return}
+  var last=s[s.length-1];
+  $('#wVal').textContent=kgf(last.kg)+' kg';
+  var ma=movavg(s,'kg',7);
+  var now=ma[ma.length-1], ref=null, t=dnum(last.d);
+  for(var i=ma.length-1;i>=0;i--){if(dnum(s[i].d)<=t-7){ref=ma[i];break}}
+  if(ref==null){$('#wDlt').innerHTML='<span>gemeten op '+s[s.length-1].d.slice(8)+'-'+s[s.length-1].d.slice(5,7)+'</span>';return}
+  var d=now-ref, sign=d>0?'+':(d<0?'−':'');
+  $('#wDlt').innerHTML='<b>'+sign+kgf(Math.abs(d))+' kg</b><span>trend per week</span>';
+}
+
+function chartSVG(key,days,goal){
+  var all=series(key);
+  if(all.length<2) return '<p class="hint" style="margin:8px 0 18px">Nog te weinig metingen. Vanaf twee punten verschijnt hier een grafiek.</p>';
+  var cut=dnum(all[all.length-1].d)-days;
+  var pts=days?all.filter(function(x){return dnum(x.d)>=cut}):all;
+  if(pts.length<2) pts=all.slice(-2);
+
+  var W=320,H=152,L=36,R=10,T=12,B=24;
+  var xs=pts.map(function(p){return dnum(p.d)});
+  var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+  var ma=movavg(pts,key,7);
+  var vals=pts.map(function(p){return p[key]}).concat(ma.filter(function(v){return v!=null}));
+  if(goal)vals.push(goal);
+  var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+  var pad=(hi-lo)*0.18||0.6; lo-=pad; hi+=pad;
+  var X=function(d){return L+(x1===x0?0.5:(d-x0)/(x1-x0))*(W-L-R)};
+  var Y=function(v){return T+(1-(v-lo)/(hi-lo))*(H-T-B)};
+  var col=key==='kg'?'var(--yolk)':'var(--kh)';
+
+  var dots=pts.map(function(p){
+    return '<circle cx="'+X(dnum(p.d)).toFixed(1)+'" cy="'+Y(p[key]).toFixed(1)+'" r="2" fill="var(--mute)" opacity=".55"/>';
+  }).join('');
+  var path='', started=false;
+  ma.forEach(function(v,i){
+    if(v==null)return;
+    path+=(started?'L':'M')+X(xs[i]).toFixed(1)+' '+Y(v).toFixed(1)+' ';started=true;
+  });
+  var goalLine = goal ? '<line x1="'+L+'" y1="'+Y(goal).toFixed(1)+'" x2="'+(W-R)+'" y2="'+Y(goal).toFixed(1)+
+    '" stroke="var(--eiwit)" stroke-width="1" stroke-dasharray="4 4" opacity=".8"/>' : '';
+  var f=function(d){var x=new Date(d*86400000);return x.getDate()+' '+MON[x.getMonth()]};
+
+  return '<div class="chartbox"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Verloop">'+
+    '<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" stroke="var(--line)"/>'+
+    '<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="var(--line)"/>'+
+    goalLine+dots+
+    '<path d="'+path+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<text x="'+(L-6)+'" y="'+(T+4)+'" text-anchor="end" font-size="9" fill="var(--mute)">'+kgf(hi)+'</text>'+
+    '<text x="'+(L-6)+'" y="'+(H-B)+'" text-anchor="end" font-size="9" fill="var(--mute)">'+kgf(lo)+'</text>'+
+    '<text x="'+L+'" y="'+(H-8)+'" font-size="9" fill="var(--mute)">'+f(x0)+'</text>'+
+    '<text x="'+(W-R)+'" y="'+(H-8)+'" text-anchor="end" font-size="9" fill="var(--mute)">'+f(x1)+'</text>'+
+    '</svg></div>';
+}
+
+/* US Navy circumference method, maten in cm */
+function navy(sex,h,neck,waist,hip){
+  if(!h||!neck||!waist) return null;
+  var v;
+  if(sex==='v'){
+    if(!hip) return null;
+    var a=waist+hip-neck; if(a<=0) return null;
+    v=495/(1.29579-0.35004*Math.log10(a)+0.22100*Math.log10(h))-450;
+  }else{
+    var b=waist-neck; if(b<=0) return null;
+    v=495/(1.0324-0.19077*Math.log10(b)+0.15456*Math.log10(h))-450;
+  }
+  return (isFinite(v)&&v>2&&v<70)?Math.round(v*10)/10:null;
+}
+
+var wKey='kg', wDays=90, wMode='direct';
+function paintWeight(){
+  var d=iso(cursor);
+  var cur=weights.filter(function(x){return x.d===d})[0]||{};
+  var recent=weights.slice().sort(function(a,b){return a.d<b.d?1:-1}).slice(0,12);
+
+  $('#wBody').innerHTML=
+    '<h2>Gewicht</h2>'+
+    '<p class="lead">Meting voor '+cursor.getDate()+' '+MON[cursor.getMonth()]+'. De dikke lijn is het gemiddelde over zeven dagen — dagschommelingen zeggen weinig.</p>'+
+    '<div class="fld"><label for="wKg">Gewicht (kg)</label><input id="wKg" type="number" inputmode="decimal" step="0.1" value="'+fv(cur.kg)+'" placeholder="82,4"></div>'+
+    '<div class="segs">'+
+      '<button data-m="direct" class="'+(wMode==='direct'?'on':'')+'">Vet% invullen</button>'+
+      '<button data-m="lint" class="'+(wMode==='lint'?'on':'')+'">Vet% via meetlint</button>'+
+    '</div>'+
+    (wMode==='direct'
+      ? '<div class="fld"><label for="wBf">Vet (%)</label><input id="wBf" type="number" inputmode="decimal" step="0.1" value="'+fv(cur.bf)+'" placeholder="optioneel"></div>'
+      : (!cfg.height
+          ? '<p class="err">Vul eerst je lengte en geslacht in bij de instellingen.</p>'
+          : '<div class="row">'+
+              '<div class="fld"><label for="mN">Nek (cm)</label><input id="mN" type="number" inputmode="decimal" step="0.1" value="'+fv(cur.nk)+'"></div>'+
+              '<div class="fld"><label for="mW">Taille (cm)</label><input id="mW" type="number" inputmode="decimal" step="0.1" value="'+fv(cur.ta)+'"></div>'+
+              (cfg.sex==='v'?'<div class="fld"><label for="mH">Heup (cm)</label><input id="mH" type="number" inputmode="decimal" step="0.1" value="'+fv(cur.hp)+'"></div>':'')+
+            '</div>'+
+            '<div class="prev" style="border-top:0;padding-top:0"><div><b id="mOut">—</b><span>berekend vetpercentage</span></div></div>'+
+            '<p class="hint" style="margin-top:-6px">Nek net onder je adamsappel, lint iets aflopend naar voren. Taille ter hoogte van je navel, ontspannen, na een gewone uitademing'+(cfg.sex==='v'?'. Heup op het breedste punt':'')+'. Meet nuchter, elke keer op hetzelfde moment.</p>'
+        )
+    )+
+    '<button class="btn pri" id="wSave">Meting bewaren</button>'+
+    '<div style="height:26px"></div>'+
+    '<div class="segs">'+
+      ['kg','bf'].map(function(k){return '<button data-k="'+k+'" class="'+(wKey===k?'on':'')+'">'+(k==='kg'?'Gewicht':'Vetpercentage')+'</button>'}).join('')+
+    '</div>'+
+    '<div class="segs">'+
+      [[30,'30 dagen'],[90,'3 maanden'],[365,'1 jaar'],[0,'Alles']].map(function(o){
+        return '<button data-d="'+o[0]+'" class="'+(wDays===o[0]?'on':'')+'">'+o[1]+'</button>'}).join('')+
+    '</div>'+
+    chartSVG(wKey,wDays,wKey==='kg'?(goals.kg||0):0)+
+    (recent.length?'<ul class="wlist">'+recent.map(function(x){
+      return '<li><span class="d">'+x.d.slice(8)+'-'+x.d.slice(5,7)+'-'+x.d.slice(2,4)+'</span>'+
+        '<span class="v">'+kgf(x.kg)+' kg'+(x.bf!=null?' · '+kgf(x.bf)+'% vet':'')+'</span>'+
+        '<button data-del="'+x.d+'">wis</button></li>';
+    }).join('')+'</ul>':'')+
+    '<button class="link" id="wClose">Sluiten</button>';
+
+  $('#wBody').querySelectorAll('.segs button').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(b.dataset.k)wKey=b.dataset.k; else wDays=+b.dataset.d;
+      paintWeight();
+    });
+  });
+  $('#wBody').querySelectorAll('[data-del]').forEach(function(b){
+    b.addEventListener('click',function(){
+      weights=weights.filter(function(x){return x.d!==b.dataset.del});
+      put(K.w,weights);paintWeight();weightSummary();
+    });
+  });
+  $('#wBody').querySelectorAll('[data-m]').forEach(function(b){
+    b.addEventListener('click',function(){wMode=b.dataset.m;paintWeight()});
+  });
+
+  function tape(){
+    if(wMode!=='lint'||!cfg.height) return null;
+    return navy(cfg.sex||'m',cfg.height,
+      fnum(($('#mN')||{}).value),fnum(($('#mW')||{}).value),fnum(($('#mH')||{}).value));
+  }
+  if(wMode==='lint'&&cfg.height){
+    var live=function(){
+      var v=tape();
+      $('#mOut').textContent = v==null ? '—' : kgf(v)+'%';
+    };
+    ['mN','mW','mH'].forEach(function(id){var el=$('#'+id);if(el)el.addEventListener('input',live)});
+    live();
+  }
+
+  $('#wClose').addEventListener('click',close);
+  $('#wSave').addEventListener('click',function(){
+    var kg=fnum($('#wKg').value);
+    if(!kg){$('#wKg').focus();toast('Vul je gewicht in');return}
+    var rec={d:d,kg:kg,bf:null};
+    if(wMode==='lint'){
+      var v=tape();
+      if(v==null&&cfg.height){toast('Controleer de maten — taille moet groter zijn dan nek')}
+      rec.bf=v;
+      rec.nk=fnum(($('#mN')||{}).value)||null;
+      rec.ta=fnum(($('#mW')||{}).value)||null;
+      rec.hp=fnum(($('#mH')||{}).value)||null;
+    }else{
+      rec.bf=fnum($('#wBf').value)||null;
+    }
+    weights=weights.filter(function(x){return x.d!==d});
+    weights.push(rec);
+    sortW();put(K.w,weights);
+    weightSummary();paintWeight();toast('Bewaard');
+  });
+}
+$('#wrow').addEventListener('click',function(){paintWeight();show('#sWeight');});
+
+/* ------------ knoppen onderin ------------ */
+$('#primary').addEventListener('click',openFind);
+$('#second').addEventListener('click',function(){
   if(cfg.primary==='foto'){
     if(!cfg.key){show('#sCfg');setTimeout(function(){$('#key').focus()},320);toast('Vul eerst je API-sleutel in');return}
     $('#file').value='';$('#file').click();return;
   }
   openPaste();
-}
-$('#primary').addEventListener('click',primaryAction);
+});
 
 $('#file').addEventListener('change',function(e){
   var f=e.target.files&&e.target.files[0];
@@ -630,19 +1381,19 @@ function analyse(file){
 /* ------------ instellingen ------------ */
 $('#cfgBtn').addEventListener('click',function(){
   $('#gKcal').value=goals.kcal; $('#gP').value=goals.p; $('#gC').value=goals.c; $('#gF').value=goals.f;
-  $('#key').value=cfg.key; $('#model').value=cfg.model; $('#prim').value=cfg.primary;
+  $('#gKg').value=fv(goals.kg); $('#sSex').value=cfg.sex||'m'; $('#sLen').value=fv(cfg.height); $('#key').value=cfg.key; $('#model').value=cfg.model; $('#prim').value=cfg.primary;
   $('#keyBlock').hidden=cfg.primary!=='foto';
   show('#sCfg');
 });
 $('#prim').addEventListener('change',function(){$('#keyBlock').hidden=this.value!=='foto'});
 $('#cfgSave').addEventListener('click',function(){
-  goals={kcal:num($('#gKcal').value),p:num($('#gP').value),c:num($('#gC').value),f:num($('#gF').value)};
-  cfg={key:$('#key').value.trim(),model:$('#model').value,primary:$('#prim').value};
+  goals={kcal:num($('#gKcal').value),p:num($('#gP').value),c:num($('#gC').value),f:num($('#gF').value),kg:fnum($('#gKg').value)||null};
+  cfg={key:$('#key').value.trim(),model:$('#model').value,primary:$('#prim').value,sex:$('#sSex').value,height:fnum($('#sLen').value)||null};
   put(K.g,goals);put(K.c,cfg);render();close();toast('Bewaard');
 });
 
 $('#expo').addEventListener('click',function(){
-  var blob=new Blob([JSON.stringify({entries:entries,goals:goals,export:new Date().toISOString()},null,2)],{type:'application/json'});
+  var blob=new Blob([JSON.stringify({entries:entries,goals:goals,own:own,weights:weights,export:new Date().toISOString()},null,2)],{type:'application/json'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='eetlog-'+iso(new Date())+'.json';
@@ -661,16 +1412,22 @@ $('#impf').addEventListener('change',function(e){
       var added=0;
       d.entries.forEach(function(x){if(x&&x.id&&!have[x.id]){entries.push(x);added++}});
       if(d.goals)goals=d.goals;
-      put(K.e,entries);put(K.g,goals);render();close();
-      toast(added+' regels toegevoegd');
+      var ho={};own.forEach(function(x){ho[fold(x.n)]=1});
+      var addedOwn=0;
+      (d.own||[]).forEach(function(x){if(x&&x.n&&!ho[fold(x.n)]){x.id=x.id||uid();x.own=true;own.push(x);addedOwn++}});
+      var hw={};weights.forEach(function(x){hw[x.d]=1});
+      (d.weights||[]).forEach(function(x){if(x&&x.d&&!hw[x.d])weights.push(x)});
+      sortW();
+      put(K.e,entries);put(K.g,goals);put(K.o,own);put(K.w,weights);render();close();
+      toast(added+' regels, '+addedOwn+' producten');
     }catch(err){toast('Dit bestand kon ik niet lezen')}
   };
   fr.readAsText(f);
 });
 $('#wipe').addEventListener('click',function(){
   if(!confirm('Het hele log, je doelen en je API-sleutel worden gewist. Dit kan niet ongedaan gemaakt worden.'))return;
-  localStorage.removeItem(K.e);localStorage.removeItem(K.g);localStorage.removeItem(K.c);
-  entries=[];goals={kcal:2200,p:140,c:230,f:70};cfg={key:'',model:'claude-haiku-4-5-20251001',primary:'plak'};
+  localStorage.removeItem(K.e);localStorage.removeItem(K.g);localStorage.removeItem(K.c);localStorage.removeItem(K.o);localStorage.removeItem(K.w);
+  entries=[];own=[];weights=[];goals={kcal:2200,p:140,c:230,f:70};cfg={key:'',model:'claude-haiku-4-5-20251001',primary:'plak'};
   render();close();toast('Gewist');
 });
 
